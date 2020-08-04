@@ -15,7 +15,7 @@ import torch.optim as optim
 
 
 
-class ConvTemporalGraphical(nn.Module):
+class ConvTemporalGraphical(nn.Module):         # 时空图
     #Source : https://github.com/yysijie/st-gcn/blob/master/net/st_gcn.py
     r"""The basic module for applying a graph convolution.
     Args:
