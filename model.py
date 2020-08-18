@@ -58,11 +58,11 @@ class ConvTemporalGraphical(nn.Module):         # 时空图
             kernel_size=(t_kernel_size, 1),
             padding=(t_padding, 0),
             stride=(t_stride, 1),
-            dilation=(t_dilation, 1),
+            dilation=(t_dilation, 1),   # 空洞率
             bias=bias)
 
     def forward(self, x, A):
-        assert A.size(0) == self.kernel_size
+        assert A.size(0) == self.kernel_size    # K==Kernel_size
         x = self.conv(x)
         x = torch.einsum('nctv,tvw->nctw', (x, A))
         return x.contiguous(), A
@@ -101,8 +101,8 @@ class st_gcn(nn.Module):
         
 #         print("outstg",out_channels)
 
-        assert len(kernel_size) == 2
-        assert kernel_size[0] % 2 == 1
+        assert len(kernel_size) == 2        # 
+        assert kernel_size[0] % 2 == 1      # 卷积核尺寸为奇数
         padding = ((kernel_size[0] - 1) // 2, 0)
         self.use_mdn = use_mdn
 
@@ -158,17 +158,17 @@ class social_stgcnn(nn.Module):
     def __init__(self,n_stgcnn =1,n_txpcnn=1,input_feat=2,output_feat=5,
                  seq_len=8,pred_seq_len=12,kernel_size=3):
         super(social_stgcnn,self).__init__()
-        self.n_stgcnn= n_stgcnn
-        self.n_txpcnn = n_txpcnn
+        self.n_stgcnn= n_stgcnn     # stgcn 的数量
+        self.n_txpcnn = n_txpcnn    # tcn的数量
                 
         self.st_gcns = nn.ModuleList()
         self.st_gcns.append(st_gcn(input_feat,output_feat,(kernel_size,seq_len)))
-        for j in range(1,self.n_stgcnn):
+        for j in range(1,self.n_stgcnn):        # 产生GCN序列
             self.st_gcns.append(st_gcn(output_feat,output_feat,(kernel_size,seq_len)))
         
         self.tpcnns = nn.ModuleList()
         self.tpcnns.append(nn.Conv2d(seq_len,pred_seq_len,3,padding=1))
-        for j in range(1,self.n_txpcnn):
+        for j in range(1,self.n_txpcnn):        # 产生TCN序列
             self.tpcnns.append(nn.Conv2d(pred_seq_len,pred_seq_len,3,padding=1))
         self.tpcnn_ouput = nn.Conv2d(pred_seq_len,pred_seq_len,3,padding=1)
             
