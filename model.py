@@ -189,7 +189,7 @@ class social_stgcnn(nn.Module):
         v = self.prelus[0](self.tpcnns[0](v))
 
         for k in range(1,self.n_txpcnn-1):
-            v =  self.prelus[k](self.tpcnns[k](v)) + v
+            v =  self.prelus[k](self.tpcnns[k](v)) + v      # 类似残差结构
             
         v = self.tpcnn_ouput(v)
         v = v.view(v.shape[0],v.shape[2],v.shape[1],v.shape[3])
