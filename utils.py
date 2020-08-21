@@ -42,12 +42,12 @@ def seq_to_graph(seq_,seq_rel,norm_lap_matr = True):
             V[s,h,:] = step_rel[h]
             A[s,h,h] = 1
             for k in range(h+1,len(step_)):
-                l2_norm = anorm(step_rel[h],step_rel[k])
+                l2_norm = anorm(step_rel[h],step_rel[k])        # 距离差的l2  求倒数
                 A[s,h,k] = l2_norm
                 A[s,k,h] = l2_norm
         if norm_lap_matr: 
-            G = nx.from_numpy_matrix(A[s,:,:])
-            A[s,:,:] = nx.normalized_laplacian_matrix(G).toarray()
+            G = nx.from_numpy_matrix(A[s,:,:])          # 生成图
+            A[s,:,:] = nx.normalized_laplacian_matrix(G).toarray()      # 返回图的拉普拉斯规范化形式
             
     return torch.from_numpy(V).type(torch.float),\
            torch.from_numpy(A).type(torch.float)
