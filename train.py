@@ -254,28 +254,29 @@ def vald(epoch):
 
 
 print('Training started ...')
-for epoch in range(args.num_epochs):
-    train(epoch)
-    vald(epoch)
-    if args.use_lrschd:
-        scheduler.step()
+if __name__ == '__main__':
+    for epoch in range(args.num_epochs):
+        train(epoch)
+        vald(epoch)
+        if args.use_lrschd:
+            scheduler.step()
 
 
-    print('*'*30)
-    print('Epoch:',args.tag,":", epoch)
-    for k,v in metrics.items():
-        if len(v)>0:
-            print(k,v[-1])
+        print('*'*30)
+        print('Epoch:',args.tag,":", epoch)
+        for k,v in metrics.items():
+            if len(v)>0:
+                print(k,v[-1])
 
 
-    print(constant_metrics)
-    print('*'*30)
-    
-    with open(checkpoint_dir+'metrics.pkl', 'wb') as fp:
-        pickle.dump(metrics, fp)
-    
-    with open(checkpoint_dir+'constant_metrics.pkl', 'wb') as fp:
-        pickle.dump(constant_metrics, fp)  
+        print(constant_metrics)
+        print('*'*30)
+        
+        with open(checkpoint_dir+'metrics.pkl', 'wb') as fp:
+            pickle.dump(metrics, fp)
+        
+        with open(checkpoint_dir+'constant_metrics.pkl', 'wb') as fp:
+            pickle.dump(constant_metrics, fp)  
 
 
 

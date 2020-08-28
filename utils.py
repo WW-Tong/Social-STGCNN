@@ -19,6 +19,8 @@ import networkx as nx
 from tqdm import tqdm
 import time
 
+def get_cosine():
+    
 
 def anorm(p1,p2): 
     NORM = math.sqrt((p1[0]-p2[0])**2+ (p1[1]-p2[1])**2)
