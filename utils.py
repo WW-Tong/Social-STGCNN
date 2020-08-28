@@ -19,14 +19,33 @@ import networkx as nx
 from tqdm import tqdm
 import time
 
-def get_cosine():
-    
+def get_distance(p1,p2):
+    return math.sqrt((p1[0]-p2[0])**2+ (p1[1]-p2[1])**2)
 
-def anorm(p1,p2): 
-    NORM = math.sqrt((p1[0]-p2[0])**2+ (p1[1]-p2[1])**2)
-    if NORM ==0:
-        return 0
-    return 1/(NORM)
+def get_norm(p):
+    return math.sqrt(p[0]**2+ p[1]**2)
+
+def get_cosine(p1,p2,p3):
+    '''
+    use three pos to get the cosine between two vector
+    '''
+    p4[0]=p2[0]-p1[0]
+    p4[1]=p2[1]-p1[1]
+    m1=math.sqrt(p4[0]**2+ p4[1]**2)
+    m2=math.sqrt(p3[0]**2+ p3[1]**2)
+    m=p4[0]*p3[0]+p4[1]*p3[1]
+    return m/(m1*m2)
+
+def anorm(p1,p2,p3,p4): 
+    cosine_ij=get_cosine(p1,p2,p3)
+    vi_norm=get_norm(p3)
+    cosine_ji=get_norm(p2,p1,p4)
+    vj_norm=get_norm(p4)
+    dis=get_distance(p1,p2)
+    norm=(vi_norm*cosine_ij+vj*cosine_ji)/dis
+    # if NORM ==0:
+    #     return 0
+    return norm
                 
 def seq_to_graph(seq_,seq_rel,norm_lap_matr = True):
     seq_ = seq_.squeeze()
@@ -44,7 +63,7 @@ def seq_to_graph(seq_,seq_rel,norm_lap_matr = True):
             V[s,h,:] = step_rel[h]
             A[s,h,h] = 1
             for k in range(h+1,len(step_)):
-                l2_norm = anorm(step_rel[h],step_rel[k])        # 距离差的l2  求倒数
+                l2_norm = anorm(step[h],step[k],step_rel[h],step_rel[k])        # 距离差的l2  求倒数
                 A[s,h,k] = l2_norm
                 A[s,k,h] = l2_norm
         if norm_lap_matr: 
