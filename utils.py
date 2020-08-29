@@ -44,7 +44,8 @@ def anorm(p1,p2,p3,p4):
     vj_norm=get_norm(p4)
     dis=get_distance(p1,p2)
     norm=(vi_norm*cosine_ij+vj_norm*cosine_ji)/dis
-    # if NORM ==0:
+    if nrom is np,nan:
+        norm = 0
     #     return 0
     return norm
                 
