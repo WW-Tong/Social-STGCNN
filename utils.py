@@ -29,6 +29,7 @@ def get_cosine(p1,p2,p3):
     '''
     use three pos to get the cosine between two vector
     '''
+    p4=np.zeros(2)
     p4[0]=p2[0]-p1[0]
     p4[1]=p2[1]-p1[1]
     m1=math.sqrt(p4[0]**2+ p4[1]**2)
@@ -39,10 +40,10 @@ def get_cosine(p1,p2,p3):
 def anorm(p1,p2,p3,p4): 
     cosine_ij=get_cosine(p1,p2,p3)
     vi_norm=get_norm(p3)
-    cosine_ji=get_norm(p2,p1,p4)
+    cosine_ji=get_cosine(p2,p1,p4)
     vj_norm=get_norm(p4)
     dis=get_distance(p1,p2)
-    norm=(vi_norm*cosine_ij+vj*cosine_ji)/dis
+    norm=(vi_norm*cosine_ij+vj_norm*cosine_ji)/dis
     # if NORM ==0:
     #     return 0
     return norm
@@ -63,7 +64,7 @@ def seq_to_graph(seq_,seq_rel,norm_lap_matr = True):
             V[s,h,:] = step_rel[h]
             A[s,h,h] = 1
             for k in range(h+1,len(step_)):
-                l2_norm = anorm(step[h],step[k],step_rel[h],step_rel[k])        # 距离差的l2  求倒数
+                l2_norm = anorm(step_[h],step_[k],step_rel[h],step_rel[k])        # 距离差的l2  求倒数
                 A[s,h,k] = l2_norm
                 A[s,k,h] = l2_norm
         if norm_lap_matr: 
