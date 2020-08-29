@@ -27,6 +27,8 @@ import argparse
 from torch import autograd
 import torch.optim.lr_scheduler as lr_scheduler
 from model import *
+import os
+
 
 parser = argparse.ArgumentParser()
 
@@ -65,7 +67,7 @@ args = parser.parse_args()
 
 
 
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 print('*'*30)
 print("Training initiating....")
@@ -254,7 +256,6 @@ def vald(epoch):
 
 
 print('Training started ...')
-if __name__ == '__main__':
     for epoch in range(args.num_epochs):
         train(epoch)
         vald(epoch)
