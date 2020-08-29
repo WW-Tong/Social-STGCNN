@@ -44,7 +44,7 @@ def anorm(p1,p2,p3,p4):
     vj_norm=get_norm(p4)
     dis=get_distance(p1,p2)
     norm=(vi_norm*cosine_ij+vj_norm*cosine_ji)/dis
-    if nrom is np,nan:
+    if torch.isnan(norm):
         norm = 0
     #     return 0
     return norm
@@ -248,3 +248,10 @@ class TrajectoryDataset(Dataset):
 
         ]
         return out
+
+das=TrajectoryDataset(data_dir="./datasets/eth/train")
+loader=DataLoader(das,1,shuffle=False)
+for step,(obs,pre,obs_re,pred_re,non,los,vo,ao,vp,ap) in enumerate(loader):
+    print(obs.shape)
+    print(pre.shape)
+    print(ok)
