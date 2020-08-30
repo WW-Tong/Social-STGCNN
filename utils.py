@@ -38,6 +38,7 @@ def get_cosine(p1,p2,p3):
     return m/(m1*m2)
 
 def anorm(p1,p2,p3,p4): 
+    
     cosine_ij=get_cosine(p1,p2,p3)
     vi_norm=get_norm(p3)
     cosine_ji=get_cosine(p2,p1,p4)
@@ -47,11 +48,11 @@ def anorm(p1,p2,p3,p4):
     if torch.isnan(norm):
         norm = 0
     #     return 0
-    return norm
+    return norm*100.0
                 
 def seq_to_graph(seq_,seq_rel,norm_lap_matr = True):
     seq_ = seq_.squeeze()
-    seq_rel = seq_rel.squeeze()
+    seq_rel =seq_rel.squeeze()
     seq_len = seq_.shape[2]
     max_nodes = seq_.shape[0]
 
@@ -249,7 +250,7 @@ class TrajectoryDataset(Dataset):
         ]
         return out
 
-# das=TrajectoryDataset(data_dir="./datasets/eth/train")
+# das=TrajectoryDataset(data_dir="./datasets/eth/test")
 # loader=DataLoader(das,1,shuffle=False)
 # for step,(obs,pre,obs_re,pred_re,non,los,vo,ao,vp,ap) in enumerate(loader):
 #     print(obs.shape)
