@@ -67,7 +67,8 @@ args = parser.parse_args()
 
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+# torch.cuda.set_device(1)
 
 print('*'*30)
 print("Training initiating....")
@@ -257,7 +258,7 @@ def vald(epoch):
 
 print('Training started ...')
 for epoch in range(args.num_epochs):
-    rain(epoch)
+    train(epoch)
     vald(epoch)
     if args.use_lrschd:
         scheduler.step()

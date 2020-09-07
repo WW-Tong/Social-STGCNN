@@ -196,5 +196,5 @@ class social_stgcnn(nn.Module):
         
         
         return v,a
-a=social_stgcnn()
-print(a)
+# a=social_stgcnn()
+# print(a)

@@ -48,6 +48,8 @@ def anorm(p1,p2,p3,p4):
     if torch.isnan(norm):
         norm = 0
     #     return 0
+    if norm <0:
+        norm=0
     return norm*100.0
                 
 def seq_to_graph(seq_,seq_rel,norm_lap_matr = True):
