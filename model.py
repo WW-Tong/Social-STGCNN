@@ -101,6 +101,7 @@ class st_gcn(nn.Module):
         
 #         print("outstg",out_channels)
 
+
         assert len(kernel_size) == 2        # 
         assert kernel_size[0] % 2 == 1      # 卷积核尺寸为奇数
         padding = ((kernel_size[0] - 1) // 2, 0)
@@ -196,5 +197,5 @@ class social_stgcnn(nn.Module):
         
         
         return v,a
-# a=social_stgcnn()
-# print(a)
+a=social_stgcnn()
+print(a)
