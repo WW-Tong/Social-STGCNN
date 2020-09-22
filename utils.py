@@ -18,7 +18,7 @@ from numpy import linalg as LA
 import networkx as nx
 from tqdm import tqdm
 import time
-
+import pickle
 def get_distance(p1,p2):
     return math.sqrt((p1[0]-p2[0])**2+ (p1[1]-p2[1])**2)
 
@@ -137,16 +137,24 @@ class TrajectoryDataset(Dataset):
         self.delim = delim
         self.norm_lap_matr = norm_lap_matr
 
-        all_files = os.listdir(self.data_dir)
-        all_files = [os.path.join(self.data_dir, _path) for _path in all_files]
+        # all_files = os.listdir(self.data_dir)
+        # all_files = [os.path.join(self.data_dir, _path) for _path in all_files]
+        all_files = [os.path.join(data_dir, path) for path in os.listdir(data_dir) if path[0] != "." and path.endswith(".txt")]
         num_peds_in_seq = []
         seq_list = []
         seq_list_rel = []
         loss_mask_list = []
         non_linear_ped = []
+        fet_map = {}
+        fet_list = []
+        
         for path in all_files:
             data = read_file(path, delim)
             frames = np.unique(data[:, 0]).tolist()
+            hkl_path = os.path.splitext(path)[0] + ".pkl"   # 获取数据文件的文件名和路径，读取对应的pkl文件
+            with open(hkl_path, 'rb') as handle:
+                new_fet = pickle.load(handle)
+            fet_map[hkl_path] = torch.from_numpy(new_fet)
             frame_data = []
             for frame in frames:
                 frame_data.append(data[frame == data[:, 0], :])
@@ -193,12 +201,15 @@ class TrajectoryDataset(Dataset):
                     loss_mask_list.append(curr_loss_mask[:num_peds_considered])
                     seq_list.append(curr_seq[:num_peds_considered])
                     seq_list_rel.append(curr_seq_rel[:num_peds_considered])
+                    fet_list.append(hkl_path)     # 每个序列对应一个hkl_path
 
         self.num_seq = len(seq_list)
         seq_list = np.concatenate(seq_list, axis=0)
         seq_list_rel = np.concatenate(seq_list_rel, axis=0)
         loss_mask_list = np.concatenate(loss_mask_list, axis=0)
         non_linear_ped = np.asarray(non_linear_ped)
+        self.fet_map = fet_map
+        self.fet_list = fet_list
 
         # Convert numpy -> Torch Tensor
         self.obs_traj = torch.from_numpy(
@@ -247,14 +258,15 @@ class TrajectoryDataset(Dataset):
             self.obs_traj_rel[start:end, :], self.pred_traj_rel[start:end, :],
             self.non_linear_ped[start:end], self.loss_mask[start:end, :],
             self.v_obs[index], self.A_obs[index],
-            self.v_pred[index], self.A_pred[index]
-
+            self.v_pred[index], self.A_pred[index],
+            self.fet_map[self.fet_list[index]]
         ]
         return out
 
-# das=TrajectoryDataset(data_dir="./datasets/eth/test")
-# loader=DataLoader(das,1,shuffle=False)
-# for step,(obs,pre,obs_re,pred_re,non,los,vo,ao,vp,ap) in enumerate(loader):
-#     print(obs.shape)
-#     print(pre.shape)
-#     print("ok")
+das=TrajectoryDataset(data_dir="./datasets/eth/test")
+loader=DataLoader(das,1,shuffle=False)
+for step,(obs,pre,obs_re,pred_re,non,los,vo,ao,vp,ap,vgg) in enumerate(loader):
+    print(obs.shape)
+    print(pre.shape)
+    print(vgg.shape)
+    print("ok")

@@ -17,7 +17,7 @@ from utils import seq_to_graph
 
 class ConvTemporalGraphical(nn.Module):         # 时空图
     #Source : https://github.com/yysijie/st-gcn/blob/master/net/st_gcn.py
-    r"""The basic module for applying a graph convolution.
+    """The basic module for applying a graph convolution.
     Args:
         in_channels (int): Number of channels in the input sequence data
         out_channels (int): Number of channels produced by the convolution
@@ -290,8 +290,8 @@ class PhysicalAttention(nn.Module):
     def __init__(self):
         super(PhysicalAttention, self).__init__()
 
-        self.L = ATTN_L   # 900
-        self.D = ATTN_D   # 512
+        self.L = ATTN_L   # 1000
+        self.D = ATTN_D   # 500
         self.D_down = ATTN_D_DOWN  # 16
         self.bottleneck_dim = BOTTLENECK_DIM  # 32
         self.embedding_dim = EMBEDDING_DIM    # 16
@@ -303,7 +303,7 @@ class PhysicalAttention(nn.Module):
         mlp_pre_attn_dims = [mlp_pre_dim, 512, self.bottleneck_dim]
         self.mlp_pre_attn = make_mlp(mlp_pre_attn_dims)   # 32-512-32
 
-        self.attn = nn.Linear(self.L*self.bottleneck_dim, self.L)     # 900*32--900
+        self.attn = nn.Linear(self.L*self.bottleneck_dim, self.L)     # 1000*32--1000
 
     def forward(self, vgg, end_pos):
 
@@ -323,7 +323,7 @@ class PhysicalAttention(nn.Module):
         attn_w = F.softmax(self.attn(attn_h.view(npeds, -1)), dim=1)  # n*28800--n*900
         attn_w = attn_w.view(npeds, self.L, 1)      # n*900*1
 
-        attn_h = torch.sum(attn_h * attn_w, dim=1)      # n*900*32**
+        attn_h = torch.sum(attn_h * attn_w, dim=1)      # n*1000*32**
         return attn_h
 class TrajectoryGenerator(nn.Module):
     def __init__(self):
