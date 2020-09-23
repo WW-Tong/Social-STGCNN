@@ -290,8 +290,8 @@ class PhysicalAttention(nn.Module):
     def __init__(self):
         super(PhysicalAttention, self).__init__()
 
-        self.L = ATTN_L   # 1000
-        self.D = ATTN_D   # 500
+        self.L = ATTN_L   # 196=14*14
+        self.D = ATTN_D   # 512
         self.D_down = ATTN_D_DOWN  # 16
         self.bottleneck_dim = BOTTLENECK_DIM  # 32
         self.embedding_dim = EMBEDDING_DIM    # 16
@@ -303,28 +303,29 @@ class PhysicalAttention(nn.Module):
         mlp_pre_attn_dims = [mlp_pre_dim, 512, self.bottleneck_dim]
         self.mlp_pre_attn = make_mlp(mlp_pre_attn_dims)   # 32-512-32
 
-        self.attn = nn.Linear(self.L*self.bottleneck_dim, self.L)     # 1000*32--1000
+        self.attn = nn.Linear(self.L*self.bottleneck_dim, self.L)     # 196*32--196
 
     def forward(self, vgg, end_pos):
 
         npeds = end_pos.size(0)
         end_pos = end_pos[:, 0, :]        # n*2
         curr_rel_embedding = self.spatial_embedding(end_pos)  # n*16
-        curr_rel_embedding = curr_rel_embedding.view(-1, 1, self.embedding_dim).repeat(1, self.L, 1)  # n*900*16
+        curr_rel_embedding = curr_rel_embedding.view(-1, 1, self.embedding_dim).repeat(1, self.L, 1)  # n*196*16
+        vgg=vgg.repeat(npeds,1,1,1)      # n,14,14,512
+        vgg = vgg.view(-1, self.D)    # n*196,512
+        features_proj = self.pre_att_proj(vgg)        # n*196,16   x=n*900
+        features_proj = features_proj.view(-1, self.L, self.D_down)   # n,196,16
 
-        vgg = vgg.view(-1, self.D)    # x*512
-        features_proj = self.pre_att_proj(vgg)        # x*16   x=n*900
-        features_proj = features_proj.view(-1, self.L, self.D_down)   # y*900*16
-
-        mlp_h_input = torch.cat([features_proj, curr_rel_embedding], dim=2)   # n*900*32
+        mlp_h_input = torch.cat([features_proj, curr_rel_embedding], dim=2)   # n*196*32
         attn_h = self.mlp_pre_attn(mlp_h_input.view(-1, self.embedding_dim+self.D_down))  # -1，32--32
-        attn_h = attn_h.view(npeds, self.L, self.bottleneck_dim)  # n*900*32
+        attn_h = attn_h.view(npeds, self.L, self.bottleneck_dim)  # n*196*32
 
-        attn_w = F.softmax(self.attn(attn_h.view(npeds, -1)), dim=1)  # n*28800--n*900
-        attn_w = attn_w.view(npeds, self.L, 1)      # n*900*1
+        attn_w = F.softmax(self.attn(attn_h.view(npeds, -1)), dim=1)  # n*6272--n*196
+        attn_w = attn_w.view(npeds, self.L, 1)      # n*196*1
 
-        attn_h = torch.sum(attn_h * attn_w, dim=1)      # n*1000*32**
-        return attn_h
+        attn_h = torch.sum(attn_h * attn_w, dim=1)      # n*196*32
+        # n*196*32 X n*196*1 对维度1求和
+        return attn_h 
 class TrajectoryGenerator(nn.Module):
     def __init__(self):
         super(TrajectoryGenerator, self).__init__()
@@ -375,3 +376,7 @@ class TrajectoryGenerator(nn.Module):
         last_pos_rel = obs_traj_rel[-1, :, 0, :]    # 64*2
         pred_traj_fake_rel = self.decoder(last_pos, last_pos_rel, state_tuple)
         return pred_traj_fake_rel
+
+
+ph=PhysicalAttention()
+print(ph)

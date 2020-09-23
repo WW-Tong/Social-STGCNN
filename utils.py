@@ -262,11 +262,11 @@ class TrajectoryDataset(Dataset):
             self.fet_map[self.fet_list[index]]
         ]
         return out
-
-das=TrajectoryDataset(data_dir="./datasets/eth/test")
-loader=DataLoader(das,1,shuffle=False)
-for step,(obs,pre,obs_re,pred_re,non,los,vo,ao,vp,ap,vgg) in enumerate(loader):
-    print(obs.shape)
-    print(pre.shape)
-    print(vgg.shape)
-    print("ok")
+# test loader
+# das=TrajectoryDataset(data_dir="./datasets/eth/test")
+# loader=DataLoader(das,1,shuffle=False)
+# for step,(obs,pre,obs_re,pred_re,non,los,vo,ao,vp,ap,vgg) in enumerate(loader):
+#     print(obs.shape)
+#     print(pre.shape)
+#     print(vgg.shape)
+#     print("ok")

@@ -25,17 +25,18 @@ NUM_SAMPLES = 20
 NUM_SAMPLES_CHECK = 5000
 
 
-ATTN_L = 1000
-ATTN_D = 500
+ATTN_L = 196
+ATTN_D = 512
 ATTN_D_DOWN = 16
-# a=torch.randn(2,3,4)
-# c=torch.ones(2,3,4)
-
-# d=a*c
-# # d.append(a)
-# # d.append(b)
-# # d.append(c)
-# # b = b.repeat(3,1)
+# a=torch.randn(1,3,2)
+# # c=torch.ones(2,3,4)
+# print(a)
+# # d=a*c
+# # # d.append(a)
+# # # d.append(b)
+# # # d.append(c)
+# a=a.repeat(3,1,1)
+# print(a)
 # # d=torch.cat(d,dim=0)
 # # b = torch.sum(a,dim=0)/2
 # # b = b*3
