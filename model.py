@@ -379,5 +379,5 @@ class TrajectoryDiscriminator(nn.Module):
         scores = self.real_classifier(final_h)  # N*1
         return scores
 
-ph=TrajectoryGenerator()
-print(ph)
+# ph=TrajectoryGenerator()
+# print(ph)
