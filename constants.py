@@ -29,10 +29,8 @@ ATTN_L = 196
 ATTN_D = 512
 ATTN_D_DOWN = 16
 
-lstm=torch.nn.LSTM(8,32,1)
 
-inp=torch.randn(14,16,8)
-out,(h,c)=lstm(inp)
-print(out.shape)
-print(h.shape)
-print(c.shape)
+s=torch.randn(1,3,2,8)
+print(s)
+print(s[0,:,:,-1])
+# print()

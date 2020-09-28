@@ -344,11 +344,11 @@ class TrajectoryGenerator(nn.Module):
         vec = z_decoder.view(1, -1).repeat(npeds, 1)        # 64*8
         return torch.cat((_input, vec), dim=1)              # 64*56 +64*8 =64*64
 
-    def forward(self, obs_traj, obs_traj_rel,V,A):
+    def forward(self, obs_traj, obs_traj_rel,V,A,vgg_list):
 
         npeds = obs_traj_rel.size(3)    # N V C T
         final_encoder_h = self.encoder(V,A)    # N H
-        end_pos = obs_traj[:, :, :,-1]  # 3*64*2
+        end_pos = obs_traj[:, :, :,-1]  # N*V*2
         attn_p = self.pattn(vgg_list, end_pos)
         # mlp_decoder_context_input = torch.cat([final_encoder_h[:, 0, :], attn_s, attn_p], dim=1)
         mlp_decoder_context_input = torch.cat([final_encoder_h, attn_p], dim=1)        # N*96
@@ -368,13 +368,24 @@ class TrajectoryDiscriminator(nn.Module):
 
         self.mlp_dim = MLP_DIM      # 64
         self.h_dim = H_DIM          # 64
-
-        self.encoder = Encoder()    # 调用编码器
+        self.embedding_dim=EMBEDDING_DIM
+        self.spatial_embedding = nn.Linear(2, self.embedding_dim)           # 输入2维，输出embedding_dim    
+        self.encoder = nn.LSTM(self.embedding_dim,self.h_dim,1)    # 调用编码器
         real_classifier_dims = [self.h_dim, self.mlp_dim, 1]   # 64，64，1
         self.real_classifier = make_mlp(real_classifier_dims)  # 感知机64--1
 
-    def forward(self, traj, traj_rel,V,A):
+    def init_hidden(self, batch):
+        '''
+        隐层状态初始化，细胞状态初始化
+        :param batch:
+        :return:
+        '''
+        h = torch.zeros(1, batch, self.h_dim).cuda()        # 1*bat*64
+        c = torch.zeros(1, batch, self.h_dim).cuda()
+        return (h, c)
 
+    def forward(self, traj, traj_rel):  # input shape V C T
+        npeds=traj.size(0) # V
         final_h = self.encoder(V,A)   # 编码隐藏状态N*H
         scores = self.real_classifier(final_h)  # N*1
         return scores
