@@ -132,14 +132,15 @@ def gan_d_loss(scores_real, scores_fake):
     return loss_real + loss_fake
 
 def l2_loss(pred_traj, pred_traj_gt, mode='average'):
-    seq_len, batch, _ = pred_traj.size()        # 12 64 2
-    loss = (pred_traj_gt.permute(1, 0, 2) - pred_traj.permute(1, 0, 2))**2  # 64*12*2，做均方误差
+    pred_traj_gt=torch.squeeze(pred_traj_gt)    # VCT
+    seq_len, batch, _ = pred_traj.size()        # T V C
+    loss = (pred_traj_gt.permute(0, 2, 1) - pred_traj.permute(1, 0, 2))**2  #        V T C
     if mode == 'sum':
         return torch.sum(loss)
     elif mode == 'average':
         return torch.sum(loss) / (seq_len * batch)
     elif mode == 'raw':
-        return loss.sum(dim=2).sum(dim=1)   # 64*1
+        return loss.sum(dim=2).sum(dim=1)   # V
 
 def displacement_error(pred_traj, pred_traj_gt, mode='sum'):
     '''

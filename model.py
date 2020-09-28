@@ -386,8 +386,14 @@ class TrajectoryDiscriminator(nn.Module):
 
     def forward(self, traj, traj_rel):  # input shape V C T
         npeds=traj.size(0) # V
-        final_h = self.encoder(V,A)   # 编码隐藏状态N*H
-        scores = self.real_classifier(final_h)  # N*1
+        traj=traj.permute(2,0,1)        # V C T ——T V C
+        traj_rel=traj_rel.permute(2,0,1)
+        traj_embedding=self.spatial_embedding(traj.view(-1,2))  # T*V,E16
+        traj_embedding=traj_embedding.view(-1,npeds,self.embedding_dim) # T V E
+        state=self.init_hidden(npeds)
+        output,state=self.encoder(traj_embedding,state)
+        final_h=state[0]    # V H
+        scores = self.real_classifier(final_h)  # V H ——V 1
         return scores
 
 # ph=TrajectoryGenerator()

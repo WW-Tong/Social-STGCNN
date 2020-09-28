@@ -154,9 +154,9 @@ def discriminator_step(batch, generator, discriminator, d_loss_fn, optimizer_d):
     traj_fake_rel = torch.cat([obs_traj_rel[0], pred_traj_fake_rel], dim=2)    # 观测差加上预测差 V C T
 
     scores_fake = discriminator(traj_fake, traj_fake_rel)       # 计算鉴别分数输入 VCT编码
-    scores_real = discriminator(traj_real, traj_real_rel)
+    scores_real = discriminator(traj_real, traj_real_rel)       # 输入 V C T 输出 V 1
 
-    data_loss = d_loss_fn(scores_real, scores_fake)
+    data_loss = d_loss_fn(scores_real, scores_fake)         # BCE
     losses['D_data_loss'] = data_loss.item()
     loss += data_loss
     losses['D_total_loss'] = loss.item()
@@ -166,50 +166,52 @@ def discriminator_step(batch, generator, discriminator, d_loss_fn, optimizer_d):
     optimizer_d.step()
     return losses
 
-# def generator_step(batch, generator, discriminator, g_loss_fn, optimizer_g):
+def generator_step(batch, generator, discriminator, g_loss_fn, optimizer_g):
 
-#     batch = [tensor.cuda() for tensor in batch]
-#     # (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel, vgg_list) = batch
-#     (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel) = batch
-#     losses = {}
-#     loss = torch.zeros(1).to(pred_traj_gt)
+    batch = [tensor.cuda() for tensor in batch]
+    # (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel, vgg_list) = batch
+    # (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel) = batch
+    (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel,n_l,l_m,V_obs,A_obs,V_pre,A_pre,vgg_list) = batch
+    losses = {}
+    loss = torch.zeros(1).to(pred_traj_gt)
     
-#     g_l2_loss_rel = []
-#     for _ in range(BEST_K):
-#         # generator_out = generator(obs_traj, obs_traj_rel, vgg_list)
-#         generator_out = generator(obs_traj, obs_traj_rel)       # 生成坐标差
-#         pred_traj_fake_rel = generator_out
-#         pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[-1, :, 0, :])     # 12*3*2
+    g_l2_loss_rel = []
+    for _ in range(BEST_K):
+        # generator_out = generator(obs_traj, obs_traj_rel, vgg_list)
+        generator_out =generator(obs_traj, obs_traj_rel,V_obs,A_obs,vgg_list)       # 生成坐标差
+        pred_traj_fake_rel = generator_out
+        pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[0, :, :, -1])     # 12*3*2 TVC
 
-#         g_l2_loss_rel.append(l2_loss(       # 生成坐标差和真实坐标差 n*1
-#             pred_traj_fake_rel,
-#             pred_traj_gt_rel,
-#             mode='raw'))
-#     # 生成了K条轨迹并计算损失 n*k
-#     npeds = obs_traj.size(1)    # 64 n
-#     g_l2_loss_sum_rel = torch.zeros(1).to(pred_traj_gt)
-#     g_l2_loss_rel = torch.stack(g_l2_loss_rel, dim=1)  # 拼接 n*k张量
-#     _g_l2_loss_rel = torch.sum(g_l2_loss_rel, dim=0)     # 求和 得 k*1
+        g_l2_loss_rel.append(l2_loss(       # 生成坐标差和真实坐标差 n*1
+            pred_traj_fake_rel,     # T V C
+            pred_traj_gt_rel,       # N V C T
+            mode='raw'))
+    # 生成了K条轨迹并计算损失 K V
+    npeds = obs_traj.size(1)    # V
+    g_l2_loss_sum_rel = torch.zeros(1).to(pred_traj_gt)     # 1
+    g_l2_loss_rel = torch.stack(g_l2_loss_rel, dim=1)  # 拼接张量 得v k
+    _g_l2_loss_rel = torch.sum(g_l2_loss_rel, dim=0)     # 求和 得 k
 
-#     _g_l2_loss_rel = torch.min(_g_l2_loss_rel) / (npeds*PRED_LEN)   # 取最小的然后取平均
-#     g_l2_loss_sum_rel += _g_l2_loss_rel
-#     losses['G_l2_loss_rel'] = g_l2_loss_sum_rel.item()
-#     loss += g_l2_loss_sum_rel           # 生成轨迹的损失
+    _g_l2_loss_rel = torch.min(_g_l2_loss_rel) / (npeds*PRED_LEN)   # 取最小的然后取平均
+    g_l2_loss_sum_rel += _g_l2_loss_rel
+    losses['G_l2_loss_rel'] = g_l2_loss_sum_rel.item()
+    loss += g_l2_loss_sum_rel           # 生成轨迹的损失
+    pred_traj_fake=pred_traj_fake.permute(1,2,0)        # TVC——VCT
+    pred_traj_fake_rel=pred_traj_fake_rel.permute(1,2,0)
+    traj_fake = torch.cat([obs_traj[0], pred_traj_fake], dim=2)     # VCT T=20
+    traj_fake_rel = torch.cat([obs_traj_rel[0], pred_traj_fake_rel], dim=2)
+    
+    scores_fake = discriminator(traj_fake, traj_fake_rel)       # 生成轨迹鉴别分数
+    discriminator_loss = g_loss_fn(scores_fake)
+    loss += discriminator_loss          # 加入鉴别器损失
+    losses['G_discriminator_loss'] = discriminator_loss.item()
+    losses['G_total_loss'] = loss.item()
 
-#     traj_fake = torch.cat([obs_traj[:, :, 0, :], pred_traj_fake], dim=0)
-#     traj_fake_rel = torch.cat([obs_traj_rel[:, :, 0, :], pred_traj_fake_rel], dim=0)
+    optimizer_g.zero_grad()
+    loss.backward()
+    optimizer_g.step()
 
-#     scores_fake = discriminator(traj_fake, traj_fake_rel)       # 生成轨迹鉴别分数
-#     discriminator_loss = g_loss_fn(scores_fake)
-#     loss += discriminator_loss          # 加入鉴别器损失
-#     losses['G_discriminator_loss'] = discriminator_loss.item()
-#     losses['G_total_loss'] = loss.item()
-
-#     optimizer_g.zero_grad()
-#     loss.backward()
-#     optimizer_g.step()
-
-#     return losses
+    return losses
 
 # def check_accuracy(loader, generator, discriminator, d_loss_fn, limit=False):
     

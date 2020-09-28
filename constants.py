@@ -30,7 +30,8 @@ ATTN_D = 512
 ATTN_D_DOWN = 16
 
 
-s=torch.randn(1,3,2,8)
-print(s)
-print(s[0,:,:,-1])
+s=torch.randn(3,2,8)
+b=s.sum(dim=2).sum(dim=1)
+print(b)
+print(b.shape)
 # print()
