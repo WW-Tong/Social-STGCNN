@@ -213,60 +213,61 @@ def generator_step(batch, generator, discriminator, g_loss_fn, optimizer_g):
 
     return losses
 
-# def check_accuracy(loader, generator, discriminator, d_loss_fn, limit=False):
+def check_accuracy(loader, generator, discriminator, d_loss_fn, limit=False):
     
-#     d_losses = []   #
-#     metrics = {}
-#     g_l2_losses_abs, g_l2_losses_rel = ([],) * 2
-#     disp_error = []
-#     f_disp_error = []
-#     total_traj = 0
+    d_losses = []   #
+    metrics = {}
+    g_l2_losses_abs, g_l2_losses_rel = ([],) * 2
+    disp_error = []     # ADE FDE
+    f_disp_error = []
+    total_traj = 0
 
-#     mask_sum = 0
-#     generator.eval()
-#     with torch.no_grad():   #
-#         for batch in loader:
-#             batch = [tensor.cuda() for tensor in batch]
-#             # (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel, vgg_list) = batch
-#             (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel) = batch
-#             # pred_traj_fake_rel = generator(obs_traj, obs_traj_rel, vgg_list)
-#             pred_traj_fake_rel = generator(obs_traj, obs_traj_rel)
-#             pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[-1, :, 0, :])
+    mask_sum = 0
+    generator.eval()
+    with torch.no_grad():   #
+        for batch in loader:
+            batch = [tensor.cuda() for tensor in batch]
+            # (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel, vgg_list) = batch
+            # (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel) = batch
+            (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel,n_l,l_m,V_obs,A_obs,V_pre,A_pre,vgg_list) = batch
+            # pred_traj_fake_rel = generator(obs_traj, obs_traj_rel, vgg_list)
+            pred_traj_fake_rel = generator(obs_traj, obs_traj_rel,V_obs,A_obs,vgg_list)     # T V C
+            pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[0, :, :, -1])     # T V C——V C
 
-#             g_l2_loss_abs = l2_loss(pred_traj_fake, pred_traj_gt, mode='sum')
-#             g_l2_loss_rel = l2_loss(pred_traj_fake_rel, pred_traj_gt_rel, mode='sum')
+            g_l2_loss_abs = l2_loss(pred_traj_fake, pred_traj_gt, mode='sum')
+            g_l2_loss_rel = l2_loss(pred_traj_fake_rel, pred_traj_gt_rel, mode='sum')
 
-#             ade = displacement_error(pred_traj_fake, pred_traj_gt)
-#             fde = final_displacement_error(pred_traj_fake[-1], pred_traj_gt[-1])
+            ade = displacement_error(pred_traj_fake, pred_traj_gt)      # TVC NVCT 
+            fde = final_displacement_error(pred_traj_fake[-1], pred_traj_gt[0,:,:,-1])        # VC  VC
 
-#             traj_real = torch.cat([obs_traj[:, :, 0, :], pred_traj_gt], dim=0)
-#             traj_real_rel = torch.cat([obs_traj_rel[:, :, 0, :], pred_traj_gt_rel], dim=0)
-#             traj_fake = torch.cat([obs_traj[:, :, 0, :], pred_traj_fake], dim=0)
-#             traj_fake_rel = torch.cat([obs_traj_rel[:, :, 0, :], pred_traj_fake_rel], dim=0)
+            traj_real = torch.cat([obs_traj[:, :, 0, :], pred_traj_gt], dim=0)
+            traj_real_rel = torch.cat([obs_traj_rel[:, :, 0, :], pred_traj_gt_rel], dim=0)
+            traj_fake = torch.cat([obs_traj[:, :, 0, :], pred_traj_fake], dim=0)
+            traj_fake_rel = torch.cat([obs_traj_rel[:, :, 0, :], pred_traj_fake_rel], dim=0)
 
-#             scores_fake = discriminator(traj_fake, traj_fake_rel)
-#             scores_real = discriminator(traj_real, traj_real_rel)
+            scores_fake = discriminator(traj_fake, traj_fake_rel)
+            scores_real = discriminator(traj_real, traj_real_rel)
 
-#             d_loss = d_loss_fn(scores_real, scores_fake)
-#             d_losses.append(d_loss.item())
+            d_loss = d_loss_fn(scores_real, scores_fake)
+            d_losses.append(d_loss.item())
 
-#             g_l2_losses_abs.append(g_l2_loss_abs.item())
-#             g_l2_losses_rel.append(g_l2_loss_rel.item())
-#             disp_error.append(ade.item())
-#             f_disp_error.append(fde.item())
+            g_l2_losses_abs.append(g_l2_loss_abs.item())
+            g_l2_losses_rel.append(g_l2_loss_rel.item())
+            disp_error.append(ade.item())
+            f_disp_error.append(fde.item())
 
-#             mask_sum += (pred_traj_gt.size(1) * PRED_LEN)
-#             total_traj += pred_traj_gt.size(1)
-#             if limit and total_traj >= NUM_SAMPLES_CHECK:
-#                 break
+            mask_sum += (pred_traj_gt.size(1) * PRED_LEN)
+            total_traj += pred_traj_gt.size(1)
+            if limit and total_traj >= NUM_SAMPLES_CHECK:
+                break
 
-#     metrics['d_loss'] = sum(d_losses) / len(d_losses)
-#     metrics['g_l2_loss_abs'] = sum(g_l2_losses_abs) / mask_sum
-#     metrics['g_l2_loss_rel'] = sum(g_l2_losses_rel) / mask_sum
+    metrics['d_loss'] = sum(d_losses) / len(d_losses)
+    metrics['g_l2_loss_abs'] = sum(g_l2_losses_abs) / mask_sum
+    metrics['g_l2_loss_rel'] = sum(g_l2_losses_rel) / mask_sum
 
-#     metrics['ade'] = sum(disp_error) / (total_traj * PRED_LEN)
-#     metrics['fde'] = sum(f_disp_error) / total_traj
-#     generator.train()
-#     return metrics
+    metrics['ade'] = sum(disp_error) / (total_traj * PRED_LEN)
+    metrics['fde'] = sum(f_disp_error) / total_traj
+    generator.train()
+    return metrics
 
-# main()
+main()

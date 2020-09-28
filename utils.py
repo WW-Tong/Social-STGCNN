@@ -131,7 +131,7 @@ def gan_d_loss(scores_real, scores_fake):
     loss_fake = bce_loss(scores_fake, y_fake)
     return loss_real + loss_fake
 
-def l2_loss(pred_traj, pred_traj_gt, mode='average'):
+def l2_loss(pred_traj, pred_traj_gt, mode='average'):       # TVC  NVCT
     pred_traj_gt=torch.squeeze(pred_traj_gt)    # VCT
     seq_len, batch, _ = pred_traj.size()        # T V C
     loss = (pred_traj_gt.permute(0, 2, 1) - pred_traj.permute(1, 0, 2))**2  #        V T C
@@ -145,13 +145,14 @@ def l2_loss(pred_traj, pred_traj_gt, mode='average'):
 def displacement_error(pred_traj, pred_traj_gt, mode='sum'):
     '''
     计算位移误差总和
-    :param pred_traj: 预测结果 12*n*2
-    :param pred_traj_gt: 实际路径 12*n*2
+    :param pred_traj: 预测结果 T V C
+    :param pred_traj_gt: 实际路径 N V C T
     :param mode:
     :return:
     '''
     seq_len, _, _ = pred_traj.size()    # 12
-    loss = pred_traj_gt.permute(1, 0, 2) - pred_traj.permute(1, 0, 2)   # 3*12*2
+    pred_traj_gt=torch.squeeze(pred_traj_gt)    # VCT
+    loss = pred_traj_gt.permute(0, 2, 1) - pred_traj.permute(1, 0, 2)   # V T C
     loss = loss**2      # 平方差
     loss = torch.sqrt(loss.sum(dim=2)).sum(dim=1)   # n*1 平方根
     if mode == 'sum':

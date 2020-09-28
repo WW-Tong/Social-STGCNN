@@ -30,8 +30,6 @@ ATTN_D = 512
 ATTN_D_DOWN = 16
 
 
-s=torch.randn(3,2,8)
-b=s.sum(dim=2).sum(dim=1)
-print(b)
-print(b.shape)
-# print()
+g_l2_losses_abs, g_l2_losses_rel = ([],) * 2
+print(g_l2_losses_abs)
+print(g_l2_losses_rel)
